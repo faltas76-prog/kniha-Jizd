@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Výpis jízd</title>
+    <!-- Vložte sem úplně stejný blok <style> jako máte v index.html -->
+</head>
+<body>
+    <div class="container">
+        <h2>📋 Historie jízd</h2>
+        <a href="index.html" style="display:block; margin-bottom: 20px;">⬅ Zpět na zadávání</a>
+        <ul id="vypis"></ul>
+    </div>
+    <script>
+        const seznam = document.getElementById('vypis');
+        // Načtení dat z localStorage pro jinou stránku
+        let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
+        
+        seznam.innerHTML = jizdy.map(j => `
+            <li>
+                <strong>${j.odkud} ➔ ${j.kam}</strong>
+                <span>📅 ${j.datum} | 🛣️ ${j.km} km (${j.typ})</span>
+                ${j.datum_tankovani || j.tankovani ? `<small>⛽ <i>Tankování: ${j.datum_tankovani || ''} ${j.tankovani || ''}</i></small>` : ''}
+            </li>
+        `).reverse().join('');
+    </script>
+</body>
+</html>
