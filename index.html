@@ -12,6 +12,7 @@
 <body>
     <h2>Kniha jízd</h2>
     <form id="form">
+        <input type="date" id="datum" required>
         <input type="text" id="odkud" placeholder="Odkud" required>
         <input type="text" id="kam" placeholder="Kam" required>
         <input type="number" id="km" placeholder="Ujeté km" required>
@@ -28,15 +29,21 @@
     <script>
         const form = document.getElementById('form');
         const seznam = document.getElementById('zaznamy');
+        const datumInput = document.getElementById('datum');
+        
+        // Předvyplnění dnešním datem
+        datumInput.valueAsDate = new Date(); 
+
         let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
 
         function vykresli() {
-            seznam.innerHTML = jizdy.map(j => `<li><b>${j.odkud} ➔ ${j.kam}</b>: ${j.km} km (${j.typ}) <i>${j.tankovani}</i></li>`).join('');
+            seznam.innerHTML = jizdy.map(j => `<li>[${j.datum}] <b>${j.odkud} ➔ ${j.kam}</b>: ${j.km} km (${j.typ}) <i>${j.tankovani}</i></li>`).join('');
         }
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             jizdy.push({
+                datum: datumInput.value,
                 odkud: document.getElementById('odkud').value,
                 kam: document.getElementById('kam').value,
                 km: document.getElementById('km').value,
@@ -45,6 +52,7 @@
             });
             localStorage.setItem('kniha_jizd', JSON.stringify(jizdy));
             form.reset();
+            datumInput.valueAsDate = new Date(); // Obnovení dnešního data pro další zadání
             vykresli();
         });
         vykresli();
