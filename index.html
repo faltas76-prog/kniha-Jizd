@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
     <title>Kniha jízd</title>
     <style>
         :root { --primary: #007bff; --bg: #f4f7f6; --text: #333; }
@@ -13,9 +14,12 @@
         input, select, button { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { background-color: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
         button:hover { background-color: #0056b3; }
+        .btn-export { background-color: #28a745; margin-bottom: 20px; }
+        .btn-export:hover { background-color: #218838; }
         ul { list-style: none; padding: 0; }
         li { background: white; margin-bottom: 10px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); display: flex; flex-direction: column; gap: 5px; }
         .badge { display: inline-block; padding: 4px 8px; border-radius: 12px; background: #e9ecef; font-size: 0.85em; width: fit-content; }
+        label { font-size: 0.9em; font-weight: bold; color: #555; }
     </style>
 </head>
 <body>
@@ -23,6 +27,7 @@
         <h2>🚗 Kniha jízd</h2>
         <div class="card">
             <form id="form">
+                <label>Datum jízdy:</label>
                 <input type="date" id="datum" required>
                 <input type="text" id="odkud" placeholder="Odkud (např. Praha)" required>
                 <input type="text" id="kam" placeholder="Kam (např. Brno)" required>
@@ -31,10 +36,15 @@
                     <option value="Pracovní">💼 Pracovní</option>
                     <option value="Soukromá">🏠 Soukromá</option>
                 </select>
-                <input type="text" id="tankovani" placeholder="Poznámka (např. tankování)">
+                <label>Tankování (volitelné):</label>
+                <input type="date" id="datum_tankovani">
+                <input type="text" id="tankovani" placeholder="Poznámka k tankování (cena, litry)">
                 <button type="submit">Uložit jízdu</button>
             </form>
         </div>
+        
+        <button class="btn-export" onclick="exportCSV()">📥 Stáhnout report (CSV)</button>
+        
         <h3>Záznamy</h3>
         <ul id="zaznamy"></ul>
     </div>
@@ -51,11 +61,11 @@
             seznam.innerHTML = jizdy.map(j => `
                 <li>
                     <strong>${j.odkud} ➔ ${j.kam}</strong>
-                    <span>📅 ${j.datum} | 🛣️ ${j.km} km</span>
+                    <span>📅 Jízda: ${j.datum} | 🛣️ ${j.km} km</span>
                     <span class="badge">${j.typ}</span>
-                    ${j.tankovani ? `<small>📝 <i>${j.tankovani}</i></small>` : ''}
+                    ${j.datum_tankovani || j.tankovani ? `<small>⛽ <i>Tankování: ${j.datum_tankovani || ''} ${j.tankovani || ''}</i></small>` : ''}
                 </li>
-            `).reverse().join(''); // Zobrazí nejnovější záznamy nahoře
+            `).reverse().join('');
         }
 
         form.addEventListener('submit', (e) => {
@@ -66,6 +76,7 @@
                 kam: document.getElementById('kam').value,
                 km: document.getElementById('km').value,
                 typ: document.getElementById('typ').value,
+                datum_tankovani: document.getElementById('datum_tankovani').value,
                 tankovani: document.getElementById('tankovani').value
             });
             localStorage.setItem('kniha_jizd', JSON.stringify(jizdy));
@@ -73,6 +84,19 @@
             datumInput.valueAsDate = new Date();
             vykresli();
         });
+
+        function exportCSV() {
+            let csv = '\\uFEFFDatum jízdy,Odkud,Kam,Km,Typ,Datum tankování,Poznámka\\n';
+            jizdy.forEach(j => {
+                csv += \`\${j.datum},\${j.odkud},\${j.kam},\${j.km},\${j.typ},\${j.datum_tankovani || ''},\${j.tankovani || ''}\\n\`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'report_jizd.csv';
+            link.click();
+        }
+
         vykresli();
     </script>
 </body>
