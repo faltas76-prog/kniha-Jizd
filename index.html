@@ -2,42 +2,60 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kniha jízd</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; }
-        input, select, button { display: block; width: 100%; margin-bottom: 10px; padding: 8px; }
-        li { margin-bottom: 5px; }
+        :root { --primary: #007bff; --bg: #f4f7f6; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        h2, h3 { text-align: center; color: var(--primary); }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select, button { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { background-color: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background-color: #0056b3; }
+        ul { list-style: none; padding: 0; }
+        li { background: white; margin-bottom: 10px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); display: flex; flex-direction: column; gap: 5px; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 12px; background: #e9ecef; font-size: 0.85em; width: fit-content; }
     </style>
 </head>
 <body>
-    <h2>Kniha jízd</h2>
-    <form id="form">
-        <input type="date" id="datum" required>
-        <input type="text" id="odkud" placeholder="Odkud" required>
-        <input type="text" id="kam" placeholder="Kam" required>
-        <input type="number" id="km" placeholder="Ujeté km" required>
-        <select id="typ">
-            <option value="Soukromá">Soukromá</option>
-            <option value="Pracovní">Pracovní</option>
-        </select>
-        <input type="text" id="tankovani" placeholder="Poznámka (např. tankování)">
-        <button type="submit">Uložit jízdu</button>
-    </form>
-    <h3>Záznamy:</h3>
-    <ul id="zaznamy"></ul>
+    <div class="container">
+        <h2>🚗 Kniha jízd</h2>
+        <div class="card">
+            <form id="form">
+                <input type="date" id="datum" required>
+                <input type="text" id="odkud" placeholder="Odkud (např. Praha)" required>
+                <input type="text" id="kam" placeholder="Kam (např. Brno)" required>
+                <input type="number" id="km" placeholder="Ujeté km" required>
+                <select id="typ">
+                    <option value="Pracovní">💼 Pracovní</option>
+                    <option value="Soukromá">🏠 Soukromá</option>
+                </select>
+                <input type="text" id="tankovani" placeholder="Poznámka (např. tankování)">
+                <button type="submit">Uložit jízdu</button>
+            </form>
+        </div>
+        <h3>Záznamy</h3>
+        <ul id="zaznamy"></ul>
+    </div>
 
     <script>
         const form = document.getElementById('form');
         const seznam = document.getElementById('zaznamy');
         const datumInput = document.getElementById('datum');
         
-        // Předvyplnění dnešním datem
         datumInput.valueAsDate = new Date(); 
-
         let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
 
         function vykresli() {
-            seznam.innerHTML = jizdy.map(j => `<li>[${j.datum}] <b>${j.odkud} ➔ ${j.kam}</b>: ${j.km} km (${j.typ}) <i>${j.tankovani}</i></li>`).join('');
+            seznam.innerHTML = jizdy.map(j => `
+                <li>
+                    <strong>${j.odkud} ➔ ${j.kam}</strong>
+                    <span>📅 ${j.datum} | 🛣️ ${j.km} km</span>
+                    <span class="badge">${j.typ}</span>
+                    ${j.tankovani ? `<small>📝 <i>${j.tankovani}</i></small>` : ''}
+                </li>
+            `).reverse().join(''); // Zobrazí nejnovější záznamy nahoře
         }
 
         form.addEventListener('submit', (e) => {
@@ -52,7 +70,7 @@
             });
             localStorage.setItem('kniha_jizd', JSON.stringify(jizdy));
             form.reset();
-            datumInput.valueAsDate = new Date(); // Obnovení dnešního data pro další zadání
+            datumInput.valueAsDate = new Date();
             vykresli();
         });
         vykresli();
