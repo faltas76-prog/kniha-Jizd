@@ -6,44 +6,179 @@
     <link rel="manifest" href="manifest.json">
     <title>Kniha jízd</title>
     <style>
-        :root { --primary: #007bff; --bg: #f4f7f6; --text: #333; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        h2 { text-align: center; color: var(--primary); }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select, button { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { background-color: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { background-color: #0056b3; }
-        .btn-export { background-color: #28a745; margin-bottom: 20px; }
-        .btn-export:hover { background-color: #218838; }
-        label { font-size: 0.9em; font-weight: bold; color: #555; }
-        .odkaz { display: block; text-align: center; margin-top: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
+        :root { 
+            --primary: #0066cc; 
+            --primary-hover: #0052a3;
+            --bg: #f0f4f8; 
+            --text: #2d3748;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --success: #38a169;
+            --success-hover: #2f855a;
+            --info: #3182ce;
+            --info-hover: #2b6cb0;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 20px 15px; 
+            line-height: 1.5;
+        }
+
+        .container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+        }
+
+        h2 { 
+            text-align: center; 
+            color: var(--text); 
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+        }
+
+        .card { 
+            background: var(--card-bg); 
+            padding: 25px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025); 
+            margin-bottom: 25px; 
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label { 
+            display: block;
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            color: #4a5568; 
+            margin-bottom: 5px;
+        }
+
+        input, select { 
+            width: 100%; 
+            padding: 12px 15px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px; /* Zabraňuje zoomování na iPhonech */
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15);
+        }
+
+        button, .btn-link { 
+            display: block;
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px;
+            cursor: pointer; 
+            font-weight: 600; 
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .btn-submit { background-color: var(--primary); color: white; margin-top: 10px; }
+        .btn-submit:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
+
+        .btn-fast { background-color: #edf2f7; color: var(--info); margin-bottom: 20px; border: 1px dashed var(--info); }
+        .btn-fast:hover { background-color: #e2e8f0; color: var(--info-hover); }
+
+        .action-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn-export { background-color: var(--success); color: white; flex: 1; }
+        .btn-export:hover { background-color: var(--success-hover); transform: translateY(-1px); }
+
+        .btn-history { background-color: white; color: var(--text); border: 1px solid var(--border); flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .btn-history:hover { background-color: #f8fafc; }
+
+        .section-divider {
+            border-top: 2px dashed var(--border);
+            margin: 20px 0 15px 0;
+            padding-top: 15px;
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
         <h2>🚗 Kniha jízd</h2>
+        
+        <button type="button" class="btn-fast" onclick="vyplnNejcastesi()">
+            ⚡ Předvyplnit nejčastější jízdu
+        </button>
+
         <div class="card">
             <form id="form">
-                <label>Datum jízdy:</label>
-                <input type="date" id="datum" required>
-                <input type="text" id="odkud" placeholder="Odkud (např. Praha)" required>
-                <input type="text" id="kam" placeholder="Kam (např. Brno)" required>
-                <input type="number" id="km" placeholder="Ujeté km" required>
-                <select id="typ">
-                    <option value="Pracovní">💼 Pracovní</option>
-                    <option value="Soukromá">🏠 Soukromá</option>
-                </select>
-                <label>Tankování (volitelné):</label>
-                <input type="date" id="datum_tankovani">
-                <input type="text" id="tankovani" placeholder="Poznámka k tankování">
-                <button type="submit">Uložit jízdu</button>
+                <div class="input-group">
+                    <label>Datum jízdy</label>
+                    <input type="date" id="datum" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Odkud</label>
+                    <input type="text" id="odkud" placeholder="např. Praha" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Kam</label>
+                    <input type="text" id="kam" placeholder="např. Brno" required>
+                </div>
+                
+                <div style="display: flex; gap: 15px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label>Vzdálenost</label>
+                        <input type="number" id="km" placeholder="Počet km" required>
+                    </div>
+                    
+                    <div class="input-group" style="flex: 1;">
+                        <label>Účel cesty</label>
+                        <select id="typ">
+                            <option value="Pracovní">💼 Pracovní</option>
+                            <option value="Soukromá">🏠 Soukromá</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="section-divider">
+                    <label style="color: #718096; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">⛽ Záznam o tankování (volitelné)</label>
+                </div>
+                
+                <div class="input-group">
+                    <input type="date" id="datum_tankovani" title="Datum tankování">
+                </div>
+                
+                <div class="input-group">
+                    <input type="text" id="tankovani" placeholder="Cena, litry, poznámka...">
+                </div>
+                
+                <button type="submit" class="btn-submit">Uložit jízdu</button>
             </form>
         </div>
         
-        <button class="btn-export" onclick="exportCSV()">📥 Stáhnout report (CSV)</button>
-        <a href="zaznamy.html" class="odkaz">📄 Zobrazit historii jízd</a>
-        <button type="button" onclick="vyplnNejcastesi()" style="background:#17a2b8; margin-bottom: 10px;">⚡ Vložit nejčastější jízdu</button>
+        <div class="action-group">
+            <button class="btn-export" onclick="exportCSV()">📥 Stáhnout CSV</button>
+            <a href="zaznamy.html" class="btn-link btn-history">📄 Historie jízd</a>
+        </div>
     </div>
 
     <script>
@@ -53,7 +188,6 @@
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             
-            // Správné načtení a přidání do pole
             let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
             
             jizdy.push({
@@ -66,16 +200,43 @@
                 tankovani: document.getElementById('tankovani').value
             });
             
-            // Správné uložení pole jako text
             localStorage.setItem('kniha_jizd', JSON.stringify(jizdy));
             
             form.reset();
             document.getElementById('datum').valueAsDate = new Date();
+            
+            // Jemnější notifikace by vyžadovala víc kódu, alert postačí, ale reset formuláře užívá jasnou zpětnou vazbu
             alert('Jízda byla úspěšně uložena!');
         });
 
+        // Opraveno: Funkce pro vložení už není zamčená uvnitř exportCSV
+        function vyplnNejcastesi() {
+            let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
+            if (!jizdy.length) {
+                alert("Zatím nemáte uložené žádné jízdy.");
+                return;
+            }
+    
+            let pocty = {}, nej = jizdy[0], max = 0;
+            jizdy.forEach(j => {
+                let klic = `${j.odkud}|${j.kam}|${j.km}|${j.typ}`;
+                pocty[klic] = (pocty[klic] || 0) + 1;
+                if (pocty[klic] > max) { max = pocty[klic]; nej = j; }
+            });
+    
+            document.getElementById('odkud').value = nej.odkud;
+            document.getElementById('kam').value = nej.kam;
+            document.getElementById('km').value = nej.km;
+            document.getElementById('typ').value = nej.typ;
+        }
+
         function exportCSV() {
             let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
+            if (!jizdy.length) {
+                alert("Nemáte žádná data k exportu.");
+                return;
+            }
+
             let csv = '\uFEFFDatum jízdy,Odkud,Kam,Km,Typ,Datum tankování,Poznámka\n';
             jizdy.forEach(j => {
                 csv += `${j.datum},${j.odkud},${j.kam},${j.km},${j.typ},${j.datum_tankovani || ''},${j.tankovani || ''}\n`;
@@ -85,22 +246,6 @@
             link.href = URL.createObjectURL(blob);
             link.download = 'report_jizd.csv';
             link.click();
-         function vyplnNejcastesi() {
-            let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
-            if (!jizdy.length) return;
-    
-            let pocty = {}, nej = jizdy[0], max = 0;
-            jizdy.forEach(j => {
-            let klic = `${j.odkud}|${j.kam}|${j.km}|${j.typ}`;
-            pocty[klic] = (pocty[klic] || 0) + 1;
-            if (pocty[klic] > max) { max = pocty[klic]; nej = j; }
-            });
-    
-            document.getElementById('odkud').value = nej.odkud;
-            document.getElementById('kam').value = nej.kam;
-            document.getElementById('km').value = nej.km;
-            document.getElementById('typ').value = nej.typ;
-                }   
         }
     </script>
 </body>
