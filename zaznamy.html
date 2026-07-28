@@ -2,30 +2,53 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Výpis jízd</title>
-    <!-- Vložte styly z index.html a přidejte: button.edit { background: #ffc107; color: black; padding: 5px; margin-top: 10px; } -->
+    <style>
+        :root { --primary: #007bff; --bg: #f4f7f6; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; font-size: 16px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        h2, h3 { text-align: center; color: var(--primary); }
+        input, button { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .btn-zp { display: block; text-align: center; margin-bottom: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
+        ul { list-style: none; padding: 0; }
+        li { background: white; margin-bottom: 10px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); display: flex; flex-direction: column; gap: 5px; }
+        button.edit { background: #ffc107; color: black; border: none; padding: 10px; cursor: pointer; font-weight: bold; border-radius: 8px; margin-top: 5px;}
+    </style>
 </head>
 <body>
     <div class="container">
         <h2>📋 Historie jízd</h2>
-        <h3 id="celkemKm">Celkem ujeto: 0 km</h3>
-        <a href="index.html" style="display:block; margin-bottom: 20px;">⬅ Zpět na zadávání</a>
+        <a href="index.html" class="btn-zp">⬅ Zpět na zadávání</a>
+        
+        <label style="font-weight: bold; color: #555;">Filtr podle měsíce:</label>
         <input type="month" id="filtrMesic" onchange="vykresli()" style="margin-bottom: 15px;">
+        
+        <h3 id="celkemKm">Celkem ujeto: 0 km</h3>
         <ul id="vypis"></ul>
     </div>
+
     <script>
         function vykresli() {
             const seznam = document.getElementById('vypis');
             let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
+            let mesic = document.getElementById('filtrMesic').value;
             
-            // Výpočet celkových km
+            // Filtrování
+            if (mesic) {
+                jizdy = jizdy.filter(j => j.datum.startsWith(mesic));
+            }
+            
+            // Součet km
             let soucet = jizdy.reduce((suma, j) => suma + parseFloat(j.km || 0), 0);
             document.getElementById('celkemKm').innerText = `Celkem ujeto: ${soucet} km`;
             
+            // Výpis
             seznam.innerHTML = jizdy.map((j, index) => `
                 <li>
                     <strong>${j.odkud} ➔ ${j.kam}</strong>
                     <span>📅 ${j.datum} | 🛣️ ${j.km} km (${j.typ})</span>
+                    ${j.datum_tankovani || j.tankovani ? `<small>⛽ <i>Tankování: ${j.datum_tankovani || ''} ${j.tankovani || ''}</i></small>` : ''}
                     <button class="edit" onclick="upravKm(${index})">✏️ Upravit km</button>
                 </li>
             `).reverse().join('');
@@ -35,22 +58,14 @@
             let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
             let noveKm = prompt("Zadejte nový počet kilometrů:", jizdy[index].km);
             
-            if (noveKm !== null && !isNaN(noveKm)) {
-                jizdy[index].km = noveKm; // Úprava pole
-                localStorage.setItem('kniha_jizd', JSON.stringify(jizdy)); // Uložení změn
-                vykresli(); // Překreslení stránky
+            if (noveKm !== null && !isNaN(noveKm) && noveKm.trim() !== '') {
+                jizdy[index].km = noveKm;
+                localStorage.setItem('kniha_jizd', JSON.stringify(jizdy));
+                vykresli();
             }
         }
         
         vykresli();
-        let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
-let mesic = document.getElementById('filtrMesic').value; // např. "2026-07"
-
-// Pokud je vybrán měsíc, vyfiltruje pouze jízdy z daného měsíce
-if (mesic) {
-    jizdy = jizdy.filter(j => j.datum.startsWith(mesic));
-}
-// Zbytek funkce s výpočtem sumy a mapováním innerHTML zůstává stejný...
     </script>
 </body>
 </html>
