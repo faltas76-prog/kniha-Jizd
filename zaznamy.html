@@ -10,6 +10,7 @@
         <h2>📋 Historie jízd</h2>
         <h3 id="celkemKm">Celkem ujeto: 0 km</h3>
         <a href="index.html" style="display:block; margin-bottom: 20px;">⬅ Zpět na zadávání</a>
+        <input type="month" id="filtrMesic" onchange="vykresli()" style="margin-bottom: 15px;">
         <ul id="vypis"></ul>
     </div>
     <script>
@@ -42,6 +43,14 @@
         }
         
         vykresli();
+        let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
+let mesic = document.getElementById('filtrMesic').value; // např. "2026-07"
+
+// Pokud je vybrán měsíc, vyfiltruje pouze jízdy z daného měsíce
+if (mesic) {
+    jizdy = jizdy.filter(j => j.datum.startsWith(mesic));
+}
+// Zbytek funkce s výpočtem sumy a mapováním innerHTML zůstává stejný...
     </script>
 </body>
 </html>
