@@ -84,6 +84,22 @@
             link.href = URL.createObjectURL(blob);
             link.download = 'report_jizd.csv';
             link.click();
+         function vyplnNejcastesi() {
+            let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
+            if (!jizdy.length) return;
+    
+            let pocty = {}, nej = jizdy[0], max = 0;
+            jizdy.forEach(j => {
+            let klic = `${j.odkud}|${j.kam}|${j.km}|${j.typ}`;
+            pocty[klic] = (pocty[klic] || 0) + 1;
+            if (pocty[klic] > max) { max = pocty[klic]; nej = j; }
+            });
+    
+            document.getElementById('odkud').value = nej.odkud;
+            document.getElementById('kam').value = nej.kam;
+            document.getElementById('km').value = nej.km;
+            document.getElementById('typ').value = nej.typ;
+                }   
         }
     </script>
 </body>
