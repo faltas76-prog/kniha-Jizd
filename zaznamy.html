@@ -2,28 +2,46 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Výpis jízd</title>
-    <!-- Vložte sem úplně stejný blok <style> jako máte v index.html -->
+    <!-- Vložte styly z index.html a přidejte: button.edit { background: #ffc107; color: black; padding: 5px; margin-top: 10px; } -->
 </head>
 <body>
     <div class="container">
         <h2>📋 Historie jízd</h2>
+        <h3 id="celkemKm">Celkem ujeto: 0 km</h3>
         <a href="index.html" style="display:block; margin-bottom: 20px;">⬅ Zpět na zadávání</a>
         <ul id="vypis"></ul>
     </div>
     <script>
-        const seznam = document.getElementById('vypis');
-        // Načtení dat z localStorage pro jinou stránku
-        let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
+        function vykresli() {
+            const seznam = document.getElementById('vypis');
+            let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
+            
+            // Výpočet celkových km
+            let soucet = jizdy.reduce((suma, j) => suma + parseFloat(j.km || 0), 0);
+            document.getElementById('celkemKm').innerText = `Celkem ujeto: ${soucet} km`;
+            
+            seznam.innerHTML = jizdy.map((j, index) => `
+                <li>
+                    <strong>${j.odkud} ➔ ${j.kam}</strong>
+                    <span>📅 ${j.datum} | 🛣️ ${j.km} km (${j.typ})</span>
+                    <button class="edit" onclick="upravKm(${index})">✏️ Upravit km</button>
+                </li>
+            `).reverse().join('');
+        }
+
+        function upravKm(index) {
+            let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
+            let noveKm = prompt("Zadejte nový počet kilometrů:", jizdy[index].km);
+            
+            if (noveKm !== null && !isNaN(noveKm)) {
+                jizdy[index].km = noveKm; // Úprava pole
+                localStorage.setItem('kniha_jizd', JSON.stringify(jizdy)); // Uložení změn
+                vykresli(); // Překreslení stránky
+            }
+        }
         
-        seznam.innerHTML = jizdy.map(j => `
-            <li>
-                <strong>${j.odkud} ➔ ${j.kam}</strong>
-                <span>📅 ${j.datum} | 🛣️ ${j.km} km (${j.typ})</span>
-                ${j.datum_tankovani || j.tankovani ? `<small>⛽ <i>Tankování: ${j.datum_tankovani || ''} ${j.tankovani || ''}</i></small>` : ''}
-            </li>
-        `).reverse().join('');
+        vykresli();
     </script>
 </body>
 </html>
