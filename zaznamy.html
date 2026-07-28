@@ -9,11 +9,16 @@
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; font-size: 16px; }
         .container { max-width: 600px; margin: 0 auto; }
         h2 { text-align: center; color: var(--primary); }
-        input, button { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        input, select, button { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
         .btn-zp { display: block; text-align: center; margin-bottom: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
         ul { list-style: none; padding: 0; }
         li { background: white; margin-bottom: 10px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); display: flex; flex-direction: column; gap: 5px; }
         button.edit { background: #ffc107; color: black; border: none; padding: 10px; cursor: pointer; font-weight: bold; border-radius: 8px; margin-top: 5px;}
+        
+        /* Modální vyskakovací okno */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); padding: 15px; box-sizing: border-box; overflow-y: auto; z-index: 1000; }
+        .modal-content { background: white; padding: 20px; border-radius: 12px; max-width: 500px; margin: 20px auto; }
+        label { font-weight: bold; font-size: 0.9em; color: #555; }
     </style>
 </head>
 <body>
@@ -21,7 +26,7 @@
         <h2>📋 Historie jízd</h2>
         <a href="index.html" class="btn-zp">⬅ Zpět na zadávání</a>
         
-        <label style="font-weight: bold; color: #555;">Filtr podle měsíce:</label>
+        <label>Filtr podle měsíce:</label>
         <input type="month" id="filtrMesic" onchange="vykresli()" style="margin-bottom: 15px;">
         
         <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center;">
@@ -34,51 +39,103 @@
         <ul id="vypis"></ul>
     </div>
 
+    <!-- Skryté vyskakovací okno pro editaci -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#007bff; text-align:center;">✏️ Upravit záznam</h3>
+            <input type="hidden" id="editIndex">
+            
+            <label>Datum jízdy:</label> <input type="date" id="editDatum" required>
+            <label>Odkud:</label> <input type="text" id="editOdkud" required>
+            <label>Kam:</label> <input type="text" id="editKam" required>
+            <label>Vzdálenost (km):</label> <input type="number" id="editKm" required>
+            <label>Účel cesty:</label>
+            <select id="editTyp">
+                <option value="Pracovní">💼 Pracovní</option>
+                <option value="Soukromá">🏠 Soukromá</option>
+            </select>
+            <label>Datum tankování:</label> <input type="date" id="editDatumTank">
+            <label>Poznámka k tankování:</label> <input type="text" id="editTankovani">
+            
+            <button onclick="ulozUpravu()" style="background:#28a745; color:white; border:none; font-weight:bold;">💾 Uložit změny</button>
+            <button onclick="zavriModal()" style="background:#dc3545; color:white; border:none; font-weight:bold;">❌ Zrušit</button>
+        </div>
+    </div>
+
     <script>
         function vykresli() {
             const seznam = document.getElementById('vypis');
             let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
             let mesic = document.getElementById('filtrMesic').value;
             
-            // Filtrování
-            if (mesic) {
-                jizdy = jizdy.filter(j => j.datum.startsWith(mesic));
-            }
+            // Pro součty vezmeme jen vyfiltrované
+            let filtrovane = mesic ? jizdy.filter(j => j.datum.startsWith(mesic)) : jizdy;
             
-            // Součet km podle typů
-            let pracKm = jizdy.reduce((suma, j) => j.typ === 'Pracovní' ? suma + parseFloat(j.km || 0) : suma, 0);
-            let soukKm = jizdy.reduce((suma, j) => j.typ === 'Soukromá' ? suma + parseFloat(j.km || 0) : suma, 0);
+            let pracKm = filtrovane.reduce((suma, j) => j.typ === 'Pracovní' ? suma + parseFloat(j.km || 0) : suma, 0);
+            let soukKm = filtrovane.reduce((suma, j) => j.typ === 'Soukromá' ? suma + parseFloat(j.km || 0) : suma, 0);
 
-            // Vypsání součtů do HTML
             document.getElementById('kmPrac').innerText = pracKm;
             document.getElementById('kmSouk').innerText = soukKm;
             document.getElementById('kmCelkem').innerText = pracKm + soukKm;
             
-            // Výpis seznamu jízd
-            seznam.innerHTML = jizdy.map((j, index) => `
-                <li>
-                    <strong>${j.odkud} ➔ ${j.kam}</strong>
-                    <span>📅 ${j.datum} | 🛣️ ${j.km} km (${j.typ})</span>
-                    ${j.datum_tankovani || j.tankovani ? `<small>⛽ <i>Tankování: ${j.datum_tankovani || ''} ${j.tankovani || ''}</i></small>` : ''}
-                    <button class="edit" onclick="upravKm(${index})">✏️ Upravit km</button>
-                </li>
-            `).reverse().join('');
+            // Generování seznamu - přidáváme postupně dopředu (jako reverse) a držíme původní index jízdy pro správnou editaci
+            let html = '';
+            jizdy.forEach((j, index) => {
+                if (!mesic || j.datum.startsWith(mesic)) {
+                    html = `
+                        <li>
+                            <strong>${j.odkud} ➔ ${j.kam}</strong>
+                            <span>📅 ${j.datum} | 🛣️ ${j.km} km (${j.typ})</span>
+                            ${j.datum_tankovani || j.tankovani ? `<small>⛽ <i>Tankování: ${j.datum_tankovani || ''} ${j.tankovani || ''}</i></small>` : ''}
+                            <button class="edit" onclick="otevriModal(${index})">✏️ Upravit záznam</button>
+                        </li>
+                    ` + html; 
+                }
+            });
+            seznam.innerHTML = html;
         }
 
-        function upravKm(index) {
+        function otevriModal(index) {
             let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
-            // Zobrazení výzvy pro úpravu, předvyplněné aktuální hodnotou
-            let noveKm = prompt("Zadejte nový počet kilometrů pro tuto jízdu:", jizdy[index].km);
+            let j = jizdy[index];
             
-            // Kontrola, že uživatel nezrušil okno a zadal číslo
-            if (noveKm !== null && !isNaN(noveKm) && noveKm.trim() !== '') {
-                jizdy[index].km = noveKm;
-                localStorage.setItem('kniha_jizd', JSON.stringify(jizdy));
-                vykresli();
-            }
+            // Načtení dat do formuláře
+            document.getElementById('editIndex').value = index;
+            document.getElementById('editDatum').value = j.datum;
+            document.getElementById('editOdkud').value = j.odkud;
+            document.getElementById('editKam').value = j.kam;
+            document.getElementById('editKm').value = j.km;
+            document.getElementById('editTyp').value = j.typ;
+            document.getElementById('editDatumTank').value = j.datum_tankovani || '';
+            document.getElementById('editTankovani').value = j.tankovani || '';
+            
+            // Zobrazení modálního okna
+            document.getElementById('editModal').style.display = 'block';
         }
         
-        // Prvotní vykreslení po načtení stránky
+        function zavriModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function ulozUpravu() {
+            let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
+            let index = document.getElementById('editIndex').value;
+            
+            // Zápis upravených hodnot
+            jizdy[index].datum = document.getElementById('editDatum').value;
+            jizdy[index].odkud = document.getElementById('editOdkud').value;
+            jizdy[index].kam = document.getElementById('editKam').value;
+            jizdy[index].km = document.getElementById('editKm').value;
+            jizdy[index].typ = document.getElementById('editTyp').value;
+            jizdy[index].datum_tankovani = document.getElementById('editDatumTank').value;
+            jizdy[index].tankovani = document.getElementById('editTankovani').value;
+            
+            // Uložení a překreslení
+            localStorage.setItem('kniha_jizd', JSON.stringify(jizdy));
+            zavriModal();
+            vykresli();
+        }
+        
         vykresli();
     </script>
 </body>
