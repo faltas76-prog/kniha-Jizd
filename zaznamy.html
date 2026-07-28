@@ -8,7 +8,7 @@
         :root { --primary: #007bff; --bg: #f4f7f6; --text: #333; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; font-size: 16px; }
         .container { max-width: 600px; margin: 0 auto; }
-        h2, h3 { text-align: center; color: var(--primary); }
+        h2 { text-align: center; color: var(--primary); }
         input, button { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
         .btn-zp { display: block; text-align: center; margin-bottom: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
         ul { list-style: none; padding: 0; }
@@ -24,7 +24,13 @@
         <label style="font-weight: bold; color: #555;">Filtr podle měsíce:</label>
         <input type="month" id="filtrMesic" onchange="vykresli()" style="margin-bottom: 15px;">
         
-        <h3 id="celkemKm">Celkem ujeto: 0 km</h3>
+        <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center;">
+            <h3 style="margin-top: 0; color: #0066cc;">📊 Souhrn kilometrů</h3>
+            <p style="margin: 5px 0;">💼 Pracovní: <strong id="kmPrac">0</strong> km</p>
+            <p style="margin: 5px 0;">🏠 Soukromá: <strong id="kmSouk">0</strong> km</p>
+            <p style="margin: 5px 0; border-top: 1px solid #ccc; padding-top: 10px;"><strong>Celkem ujeto: <span id="kmCelkem">0</span> km</strong></p>
+        </div>
+
         <ul id="vypis"></ul>
     </div>
 
@@ -39,11 +45,16 @@
                 jizdy = jizdy.filter(j => j.datum.startsWith(mesic));
             }
             
-            // Součet km
-            let soucet = jizdy.reduce((suma, j) => suma + parseFloat(j.km || 0), 0);
-            document.getElementById('celkemKm').innerText = `Celkem ujeto: ${soucet} km`;
+            // Součet km podle typů
+            let pracKm = jizdy.reduce((suma, j) => j.typ === 'Pracovní' ? suma + parseFloat(j.km || 0) : suma, 0);
+            let soukKm = jizdy.reduce((suma, j) => j.typ === 'Soukromá' ? suma + parseFloat(j.km || 0) : suma, 0);
+
+            // Vypsání součtů do HTML
+            document.getElementById('kmPrac').innerText = pracKm;
+            document.getElementById('kmSouk').innerText = soukKm;
+            document.getElementById('kmCelkem').innerText = pracKm + soukKm;
             
-            // Výpis
+            // Výpis seznamu jízd
             seznam.innerHTML = jizdy.map((j, index) => `
                 <li>
                     <strong>${j.odkud} ➔ ${j.kam}</strong>
@@ -56,8 +67,10 @@
 
         function upravKm(index) {
             let jizdy = JSON.parse(localStorage.getItem('kniha_jizd')) || [];
-            let noveKm = prompt("Zadejte nový počet kilometrů:", jizdy[index].km);
+            // Zobrazení výzvy pro úpravu, předvyplněné aktuální hodnotou
+            let noveKm = prompt("Zadejte nový počet kilometrů pro tuto jízdu:", jizdy[index].km);
             
+            // Kontrola, že uživatel nezrušil okno a zadal číslo
             if (noveKm !== null && !isNaN(noveKm) && noveKm.trim() !== '') {
                 jizdy[index].km = noveKm;
                 localStorage.setItem('kniha_jizd', JSON.stringify(jizdy));
@@ -65,6 +78,7 @@
             }
         }
         
+        // Prvotní vykreslení po načtení stránky
         vykresli();
     </script>
 </body>
